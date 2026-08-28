@@ -114,8 +114,8 @@ php artisan serve  # starts the app at http://127.0.0.1:8000, run in another
 - [ ] Phase 3 — User & Role Management
 - [ ] Phase 4 — Student Management
 - [ ] Phase 5 — Staff / HR Management
-- [ ] Phase 6 — Attendance
-- [ ] Phase 7 — Fee Management
+- [x] Phase 6 — Attendance
+- [x] Phase 7 — Fee Management
 - [ ] Phase 8 — Payroll
 - [ ] Phase 9 — Reporting & Cross-Campus Dashboard
 - [ ] Phase 10 — Notifications
