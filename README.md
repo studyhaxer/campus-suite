@@ -110,13 +110,13 @@ php artisan serve  # starts the app at http://127.0.0.1:8000, run in another
 ## 🗺 Development Roadmap
 
 - [x] Phase 1 — Foundation (auth, roles, campus scoping, base layout)
-- [ ] Phase 2 — Campus Management
-- [ ] Phase 3 — User & Role Management
-- [ ] Phase 4 — Student Management
-- [ ] Phase 5 — Staff / HR Management
+- [x] Phase 2 — Campus Management
+- [x] Phase 3 — User & Role Management
+- [x] Phase 4 — Student Management
+- [x] Phase 5 — Staff / HR Management
 - [x] Phase 6 — Attendance
 - [x] Phase 7 — Fee Management
-- [ ] Phase 8 — Payroll
+- [x] Phase 8 — Payroll
 - [ ] Phase 9 — Reporting & Cross-Campus Dashboard
 - [ ] Phase 10 — Notifications
 - [ ] Phase 11 — Polish & Non-Functional Requirements (responsiveness, accessibility, performance)
