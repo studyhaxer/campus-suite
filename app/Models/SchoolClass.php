@@ -10,11 +10,14 @@ class SchoolClass extends Model
 {
     use BelongsToCampus;
 
-    protected $fillable = ['campus_id', 'name', 'sort_order', 'is_active'];
+        protected $fillable = ['campus_id', 'name', 'sort_order', 'monthly_fee', 'is_active'];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'monthly_fee' => 'decimal:2',
+        ];
     }
 
     public function sections(): HasMany

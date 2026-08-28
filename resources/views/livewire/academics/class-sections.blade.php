@@ -24,6 +24,7 @@
                                 <span class="px-2 py-1 text-xs rounded-full {{ $class->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
                                     {{ $class->is_active ? 'Active' : 'Inactive' }}
                                 </span>
+                                
                             </div>
                             <div class="text-sm space-x-3">
                                 @can('create', \App\Models\ClassSection::class)
@@ -89,6 +90,11 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Sort Order</label>
                             <input type="number" wire:model="classSortOrder" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Monthly Fee</label>
+                            <input type="number" step="0.01" wire:model="classMonthlyFee" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            @error('classMonthlyFee') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div class="flex justify-end gap-3 pt-4 border-t">
                             <button type="button" wire:click="$set('showClassModal', false)" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Cancel</button>

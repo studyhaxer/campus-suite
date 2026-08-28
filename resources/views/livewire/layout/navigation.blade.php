@@ -70,6 +70,12 @@ new class extends Component
                             {{ __('Staff Attendance') }}
                         </x-nav-link>
                     @endrole
+
+                    @role('Manager|Campus Admin|Accountant')
+                        <x-nav-link :href="route('fees.invoices')" :active="request()->routeIs('fees.*')" wire:navigate>
+                            {{ __('Fees') }}
+                        </x-nav-link>
+                    @endrole
                 </div>
             </div>
 
@@ -161,6 +167,12 @@ new class extends Component
             @role('Manager|Campus Admin')
                 <x-responsive-nav-link :href="route('attendance.staff')" :active="request()->routeIs('attendance.staff')" wire:navigate>
                     {{ __('Staff Attendance') }}
+                </x-responsive-nav-link>
+            @endrole
+
+            @role('Manager|Campus Admin|Accountant')
+                <x-responsive-nav-link :href="route('fees.invoices')" :active="request()->routeIs('fees.*')" wire:navigate>
+                    {{ __('Fees') }}
                 </x-responsive-nav-link>
             @endrole
         </div>

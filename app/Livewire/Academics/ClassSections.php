@@ -14,6 +14,7 @@ use Livewire\Component;
     public ?int $editingClassId = null;
     public string $className = '';
     public int $classSortOrder = 0;
+    public string $classMonthlyFee = '0';
 
     // Section modal
     public bool $showSectionModal = false;
@@ -39,7 +40,7 @@ use Livewire\Component;
     public function openCreateClass(): void
     {
         $this->authorize('create', SchoolClass::class);
-        $this->reset(['editingClassId', 'className', 'classSortOrder']);
+        $this->reset(['editingClassId', 'className', 'classSortOrder', 'classMonthlyFee']);
         $this->showClassModal = true;
     }
 
@@ -50,6 +51,7 @@ use Livewire\Component;
         $this->editingClassId = $class->id;
         $this->className = $class->name;
         $this->classSortOrder = $class->sort_order;
+        $this->classMonthlyFee = (string) $class->monthly_fee;
         $this->showClassModal = true;
     }
 
@@ -58,17 +60,25 @@ use Livewire\Component;
         $data = $this->validate([
             'className' => 'required|string|max:255',
             'classSortOrder' => 'nullable|integer|min:0',
+            'classMonthlyFee' => 'nullable|numeric|min:0',
         ]);
 
         if ($this->editingClassId) {
             $class = SchoolClass::findOrFail($this->editingClassId);
             $this->authorize('update', $class);
-            $class->update(['name' => $data['className'], 'sort_order' => $data['classSortOrder'] ?? 0]);
+            $class->update([
+                'name' => $data['className'],
+                'sort_order' => $data['classSortOrder'] ?? 0,
+                'monthly_fee' => $data['classMonthlyFee'] ?? 0,
+            ]);
         } else {
             $this->authorize('create', SchoolClass::class);
-            SchoolClass::create(['name' => $data['className'], 'sort_order' => $data['classSortOrder'] ?? 0]);
+            SchoolClass::create([
+                'name' => $data['className'],
+                'sort_order' => $data['classSortOrder'] ?? 0,
+                'monthly_fee' => $data['classMonthlyFee'] ?? 0,
+            ]);
         }
-
         $this->showClassModal = false;
         session()->flash('status', 'Class saved successfully.');
     }

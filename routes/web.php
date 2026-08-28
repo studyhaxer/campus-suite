@@ -40,3 +40,6 @@ Route::get('/attendance/students', \App\Livewire\Attendance\Students::class)
 Route::get('/attendance/staff', \App\Livewire\Attendance\Staff::class)
     ->middleware(['auth', 'verified'])
     ->name('attendance.staff');
+Route::get('/fees/invoices', \App\Livewire\Fees\Invoices::class)
+    ->middleware(['auth', 'verified'])
+    ->name('fees.invoices');
