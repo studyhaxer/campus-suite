@@ -38,6 +38,20 @@ new class extends Component
                         <x-nav-link :href="route('campuses.index')" :active="request()->routeIs('campuses.*')" wire:navigate>
                             {{ __('Campuses') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" wire:navigate>
+                            {{ __('Users') }}
+                        </x-nav-link>
+                    @endrole
+
+                    @role('Manager|Campus Admin|Teacher')
+                        <x-nav-link :href="route('students.index')" :active="request()->routeIs('students.*')" wire:navigate>
+                            {{ __('Students') }}
+                        </x-nav-link>
+                    @endrole
+                    @role('Manager|Campus Admin')
+                        <x-nav-link :href="route('academics.classes')" :active="request()->routeIs('academics.*')" wire:navigate>
+                            {{ __('Classes') }}
+                        </x-nav-link>
                     @endrole
                 </div>
             </div>
@@ -99,6 +113,20 @@ new class extends Component
             @role('Manager')
                 <x-responsive-nav-link :href="route('campuses.index')" :active="request()->routeIs('campuses.*')" wire:navigate>
                     {{ __('Campuses') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" wire:navigate>
+                    {{ __('Users') }}
+                </x-responsive-nav-link>
+            @endrole
+
+            @role('Manager|Campus Admin|Teacher')
+                <x-responsive-nav-link :href="route('students.index')" :active="request()->routeIs('students.*')" wire:navigate>
+                    {{ __('Students') }}
+                </x-responsive-nav-link>
+            @endrole
+            @role('Manager|Campus Admin')
+                <x-responsive-nav-link :href="route('academics.classes')" :active="request()->routeIs('academics.*')" wire:navigate>
+                    {{ __('Classes') }}
                 </x-responsive-nav-link>
             @endrole
         </div>

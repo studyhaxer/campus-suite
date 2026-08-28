@@ -20,17 +20,24 @@ trait BelongsToCampus
                 return;
             }
 
-            // Manager role sees every campus in their organization
+            $table = (new static)->getTable();
+
+            // If a campus is currently selected (via the campus switcher),
+            // always scope to it — this applies to every role, including Manager.
+            if (session()->has('current_campus_id')) {
+                $builder->where($table . '.campus_id', session('current_campus_id'));
+                return;
+            }
+
+            // No campus selected yet: Managers see every campus in their organization.
             if ($user->hasRole('Manager')) {
                 return;
             }
 
+            // Everyone else falls back to every campus they're assigned to.
             $campusIds = $user->campuses->pluck('id');
 
-            $builder->whereIn(
-                (new static)->getTable() . '.campus_id',
-                $campusIds
-            );
+            $builder->whereIn($table . '.campus_id', $campusIds);
         });
 
         // Auto-fill campus_id from the currently selected campus when creating records

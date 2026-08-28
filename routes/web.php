@@ -17,3 +17,15 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 require __DIR__.'/auth.php';
+
+Route::get('/academics/classes', \App\Livewire\Academics\ClassSections::class)
+    ->middleware(['auth', 'verified'])
+    ->name('academics.classes');
+
+Route::get('/students', \App\Livewire\Students\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('students.index');
+
+Route::get('/users', \App\Livewire\Users\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('users.index');
