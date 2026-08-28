@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
 
-Route::view('dashboard', 'dashboard')
+Route::get('/dashboard', \App\Livewire\Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -43,3 +43,6 @@ Route::get('/attendance/staff', \App\Livewire\Attendance\Staff::class)
 Route::get('/fees/invoices', \App\Livewire\Fees\Invoices::class)
     ->middleware(['auth', 'verified'])
     ->name('fees.invoices');
+Route::get('/payroll', \App\Livewire\Payroll\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('payroll.index');
