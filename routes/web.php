@@ -29,3 +29,7 @@ Route::get('/students', \App\Livewire\Students\Index::class)
 Route::get('/users', \App\Livewire\Users\Index::class)
     ->middleware(['auth', 'verified'])
     ->name('users.index');
+
+Route::get('/staff', \App\Livewire\Staff\Index::class)
+    ->middleware(['auth', 'verified'])
+    ->name('staff.index');

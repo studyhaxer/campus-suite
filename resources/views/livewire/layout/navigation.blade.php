@@ -53,6 +53,12 @@ new class extends Component
                             {{ __('Classes') }}
                         </x-nav-link>
                     @endrole
+
+                    @role('Manager|Campus Admin')
+                        <x-nav-link :href="route('staff.index')" :active="request()->routeIs('staff.*')" wire:navigate>
+                            {{ __('Staff') }}
+                        </x-nav-link>
+                    @endrole
                 </div>
             </div>
 
@@ -127,6 +133,12 @@ new class extends Component
             @role('Manager|Campus Admin')
                 <x-responsive-nav-link :href="route('academics.classes')" :active="request()->routeIs('academics.*')" wire:navigate>
                     {{ __('Classes') }}
+                </x-responsive-nav-link>
+            @endrole
+
+            @role('Manager|Campus Admin')
+                <x-responsive-nav-link :href="route('staff.index')" :active="request()->routeIs('staff.*')" wire:navigate>
+                    {{ __('Staff') }}
                 </x-responsive-nav-link>
             @endrole
         </div>
