@@ -59,6 +59,17 @@ new class extends Component
                             {{ __('Staff') }}
                         </x-nav-link>
                     @endrole
+
+                    @role('Manager|Campus Admin|Teacher')
+                        <x-nav-link :href="route('attendance.students')" :active="request()->routeIs('attendance.students')" wire:navigate>
+                            {{ __('Student Attendance') }}
+                        </x-nav-link>
+                    @endrole
+                    @role('Manager|Campus Admin')
+                        <x-nav-link :href="route('attendance.staff')" :active="request()->routeIs('attendance.staff')" wire:navigate>
+                            {{ __('Staff Attendance') }}
+                        </x-nav-link>
+                    @endrole
                 </div>
             </div>
 
@@ -139,6 +150,17 @@ new class extends Component
             @role('Manager|Campus Admin')
                 <x-responsive-nav-link :href="route('staff.index')" :active="request()->routeIs('staff.*')" wire:navigate>
                     {{ __('Staff') }}
+                </x-responsive-nav-link>
+            @endrole
+
+            @role('Manager|Campus Admin|Teacher')
+                <x-responsive-nav-link :href="route('attendance.students')" :active="request()->routeIs('attendance.students')" wire:navigate>
+                    {{ __('Student Attendance') }}
+                </x-responsive-nav-link>
+            @endrole
+            @role('Manager|Campus Admin')
+                <x-responsive-nav-link :href="route('attendance.staff')" :active="request()->routeIs('attendance.staff')" wire:navigate>
+                    {{ __('Staff Attendance') }}
                 </x-responsive-nav-link>
             @endrole
         </div>

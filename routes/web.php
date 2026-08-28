@@ -33,3 +33,10 @@ Route::get('/users', \App\Livewire\Users\Index::class)
 Route::get('/staff', \App\Livewire\Staff\Index::class)
     ->middleware(['auth', 'verified'])
     ->name('staff.index');
+Route::get('/attendance/students', \App\Livewire\Attendance\Students::class)
+    ->middleware(['auth', 'verified'])
+    ->name('attendance.students');
+
+Route::get('/attendance/staff', \App\Livewire\Attendance\Staff::class)
+    ->middleware(['auth', 'verified'])
+    ->name('attendance.staff');
