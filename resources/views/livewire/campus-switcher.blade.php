@@ -1,6 +1,12 @@
-<div class="px-4 pt-5">
-    <p class="text-[11px] uppercase tracking-wider text-white/35 font-mono px-2 mb-2">Campuses</p>
-    <div class="space-y-1">
+<div class="px-4 pt-5" x-data="{ open: false }">
+    <button type="button" @click="open = !open"
+        class="w-full flex items-center justify-between px-2 mb-2 text-[11px] uppercase tracking-wider text-white/35 font-mono hover:text-white/60">
+        <span>Campuses</span>
+        <svg :class="open ? 'rotate-90' : ''" class="w-3 h-3 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+    </button>
+    <div x-show="open" x-transition x-cloak class="space-y-1">
         @php
             $palette = ['#E7C089', '#6FCF97', '#7FB3D5', '#E08585', '#B39DDB', '#80CBC4', '#F2A65A', '#9FA8DA'];
         @endphp

@@ -3,6 +3,10 @@
 namespace App\Livewire\Campuses;
 
 use App\Models\Campus;
+use App\Models\StaffProfile;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -78,6 +82,53 @@ use Livewire\Component;
         $campus = Campus::findOrFail($campusId);
         $this->authorize('update', $campus);
         $campus->update(['is_active' => ! $campus->is_active]);
+    }
+    public function delete(int $campusId): void
+    {
+        $campus = Campus::findOrFail($campusId);
+        $this->authorize('delete', $campus);
+
+        DB::transaction(function () use ($campus) {
+            // staff_profiles.user_id is unique, so each of these users has exactly
+            // one profile — the one about to cascade away with this campus.
+            $staffUserIds = StaffProfile::where('campus_id', $campus->id)->pluck('user_id');
+
+            // Only delete the User account if this was their only campus assignment.
+            // The campus_user pivot (multi-campus assignment for non-Manager roles)
+            // is checked here, before the campus row (and its pivot rows) disappear.
+            $deletableUserIds = collect();
+
+            if ($staffUserIds->isNotEmpty()) {
+                if (Schema::hasTable('campus_user')) {
+                    $deletableUserIds = $staffUserIds->filter(function ($userId) use ($campus) {
+                        return ! DB::table('campus_user')
+                            ->where('user_id', $userId)
+                            ->where('campus_id', '!=', $campus->id)
+                            ->exists();
+                    });
+                } else {
+                    // No multi-campus pivot to check against — this is their only campus.
+                    $deletableUserIds = $staffUserIds;
+                }
+            }
+
+            // Never delete yourself this way, and never delete a Manager
+            // (Managers aren't scoped to a single campus).
+            $deletableUserIds = $deletableUserIds
+                ->reject(fn ($id) => $id === auth()->id())
+                ->filter(fn ($id) => ! (User::find($id)?->hasRole('Manager')));
+
+            // Deleting the campus cascades students, school_classes, class_sections,
+            // and staff_profiles at the DB level (cascadeOnDelete on campus_id).
+            $campus->delete();
+
+            // Remove the now-orphaned staff accounts whose only campus was this one.
+            if ($deletableUserIds->isNotEmpty()) {
+                User::whereIn('id', $deletableUserIds)->delete();
+            }
+        });
+
+        session()->flash('status', 'Campus and its related records deleted successfully.');
     }
     protected function generateUniqueCode(string $name): string
     {

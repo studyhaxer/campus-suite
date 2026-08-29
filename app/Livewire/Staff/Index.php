@@ -189,6 +189,19 @@ use Maatwebsite\Excel\Facades\Excel;
         ]);
     }
 
+    public function deleteStaff(int $profileId): void
+    {
+        $profile = StaffProfile::findOrFail($profileId);
+        $this->authorize('delete', $profile);
+
+        $user = $profile->user;
+        $profile->delete();
+        $user?->delete();
+
+        $this->resetPage();
+        session()->flash('status', 'Staff member deleted.');
+    }
+
     public function downloadTemplate()
     {
         $this->authorize('create', StaffProfile::class);

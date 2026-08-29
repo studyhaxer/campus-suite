@@ -14,7 +14,7 @@ export default {
             colors: {
                 parchment: '#FAF9F6',
                 ink: '#14213D',
-                indigo: '#1B2A4A',
+                brand: '#1B2A4A',
                 gold: '#C9A227',
                 slate: '#5B6472',
                 signal: '#2F7A4D',

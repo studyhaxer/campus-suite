@@ -11,10 +11,28 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h1 class="text-xl font-semibold text-gray-800">{{ __('Students') }}</h1>
 
-                <button wire:click="openCreate" type="button"
-                    class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none transition ease-in-out duration-150">
-                    {{ __('Add Student') }}
-                </button>
+                <div class="flex items-center gap-2">
+                    @can('viewAny', \App\Models\Student::class)
+                        <button wire:click="exportStudents" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                            {{ __('Export') }}
+                        </button>
+                    @endcan
+                    @can('create', \App\Models\Student::class)
+                        <button wire:click="downloadTemplate" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                            {{ __('Download Template') }}
+                        </button>
+                        <button wire:click="openImport" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                            {{ __('Import') }}
+                        </button>
+                        <button wire:click="openCreate" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:outline-none transition ease-in-out duration-150">
+                            {{ __('Add Student') }}
+                        </button>
+                    @endcan
+                </div>
             </div>
 
             <div class="bg-white shadow-sm sm:rounded-lg p-4">
@@ -99,6 +117,14 @@
                                         class="text-gray-600 hover:text-gray-900 font-medium">
                                         {{ $student->status === 'active' ? __('Deactivate') : __('Activate') }}
                                     </button>
+                                    @can('delete', $student)
+                                        <button wire:click="delete({{ $student->id }})" type="button"
+                                            wire:confirm="{{ __('Are you sure you want to delete :name? This cannot be undone.', ['name' => $student->first_name . ' ' . $student->last_name]) }}"
+                                            wire:loading.attr="disabled" wire:target="delete({{ $student->id }})"
+                                            class="text-red-600 hover:text-red-800 font-medium disabled:opacity-50">
+                                            {{ __('Delete') }}
+                                        </button>
+                                    @endcan
                                 </td>
                             </tr>
                         @empty
@@ -219,6 +245,62 @@
                                 class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                                 <span wire:loading.remove wire:target="save">{{ __('Save') }}</span>
                                 <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Import Modal --}}
+    @if ($showImportModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" x-data x-on:keydown.escape.window="$wire.showImportModal = false">
+            <div class="flex items-center justify-center min-h-screen px-4 py-8">
+                <div class="fixed inset-0 bg-gray-500/75" wire:click="$set('showImportModal', false)"></div>
+
+                <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4">
+                    <h2 class="text-lg font-semibold text-gray-800">{{ __('Import Students') }}</h2>
+                    <p class="text-sm text-gray-500">
+                        {{ __('Download the template, fill in student details, then upload it here. Leave Admission Number blank to auto-generate one. If an Admission Number already exists for a campus, that student is updated instead of duplicated.') }}
+                    </p>
+
+                    <form wire:submit="import" class="space-y-4">
+                        <div>
+                            <input type="file" wire:model="importFile" accept=".xlsx,.xls"
+                                class="block w-full text-sm text-gray-700">
+                            <div wire:loading wire:target="importFile" class="text-xs text-gray-400 mt-1">
+                                {{ __('Uploading...') }}
+                            </div>
+                            @error('importFile') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                        </div>
+
+                        @if ($importedCount !== null)
+                            <div class="bg-green-50 border border-green-200 text-green-800 text-sm rounded-md px-4 py-3">
+                                {{ __(':count student(s) imported successfully.', ['count' => $importedCount]) }}
+                            </div>
+                        @endif
+
+                        @if (!empty($importErrors))
+                            <div class="bg-red-50 border border-red-200 text-red-800 text-sm rounded-md px-4 py-3 max-h-48 overflow-y-auto">
+                                <p class="font-medium mb-1">{{ __(':count row(s) skipped:', ['count' => count($importErrors)]) }}</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    @foreach ($importErrors as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button type="button" wire:click="$set('showImportModal', false)"
+                                class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-50">
+                                {{ __('Close') }}
+                            </button>
+                            <button type="submit" wire:loading.attr="disabled" wire:target="import"
+                                class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 disabled:opacity-50">
+                                <span wire:loading.remove wire:target="import">{{ __('Upload & Import') }}</span>
+                                <span wire:loading wire:target="import">{{ __('Importing...') }}</span>
                             </button>
                         </div>
                     </form>

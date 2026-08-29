@@ -2,16 +2,23 @@
 
 namespace App\Livewire\Students;
 
+use App\Exports\StudentExport;
+use App\Exports\StudentTemplateExport;
+use App\Imports\StudentImport;
 use App\Models\ClassSection;
 use App\Models\Student;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 #[Layout('layouts.app')] class Index extends Component
 {
     use WithPagination;
+    use WithFileUploads;
 
     public string $search = '';
     public string $classSectionFilter = '';
@@ -31,6 +38,12 @@ use Livewire\WithPagination;
     public string $guardian_phone = '';
     public string $guardian_email = '';
     public string $address = '';
+
+    // Import modal
+    public bool $showImportModal = false;
+    public $importFile;
+    public ?int $importedCount = null;
+    public array $importErrors = [];
 
     public function updatingSearch(): void { $this->resetPage(); }
     public function updatingClassSectionFilter(): void { $this->resetPage(); }
@@ -143,6 +156,16 @@ use Livewire\WithPagination;
         $student->update(['status' => $student->status === 'active' ? 'inactive' : 'active']);
     }
 
+    public function delete(int $id): void
+    {
+        $student = Student::findOrFail($id);
+        $this->authorize('delete', $student);
+        $student->delete();
+
+        $this->resetPage();
+        session()->flash('status', 'Student deleted successfully.');
+    }
+
     protected function generateAdmissionNumber(): string
     {
         $campus = \App\Models\Campus::find(session('current_campus_id'));
@@ -155,5 +178,72 @@ use Livewire\WithPagination;
         } while (Student::withoutGlobalScopes()->where('campus_id', session('current_campus_id'))->where('admission_number', $candidate)->exists());
 
         return $candidate;
+    }
+
+    // --- Export / Template / Import ---
+    public function exportStudents()
+    {
+        $this->authorize('viewAny', Student::class);
+        [$isManager, $organizationId, $lockedCampusId] = $this->resolveScope();
+
+        return (new StudentExport($isManager, $organizationId, $lockedCampusId))
+            ->download('students-export-' . now()->format('Y-m-d') . '.xlsx');
+    }
+
+    public function downloadTemplate()
+    {
+        $this->authorize('create', Student::class);
+        [$isManager, $organizationId, ] = $this->resolveScope();
+
+        return (new StudentTemplateExport($isManager, $organizationId))
+            ->download('student-import-template.xlsx');
+    }
+
+    public function openImport(): void
+    {
+        $this->authorize('create', Student::class);
+        $this->reset(['importFile', 'importedCount', 'importErrors']);
+        $this->showImportModal = true;
+    }
+
+    public function import(): void
+    {
+        $this->authorize('create', Student::class);
+
+        $this->validate([
+            'importFile' => 'required|file|mimes:xlsx,xls|max:10240',
+        ]);
+
+        [$isManager, $organizationId, $lockedCampusId] = $this->resolveScope();
+
+        $import = new StudentImport($organizationId, $isManager, $lockedCampusId);
+
+        Excel::import($import, $this->importFile->getRealPath());
+
+        $this->importedCount = $import->importedCount();
+        $this->importErrors = $import->errorMessages();
+        $this->importFile = null;
+    }
+
+    /**
+     * NOTE: this page scopes non-managers by session('current_campus_id')
+     * (see generateAdmissionNumber() above and the rules() unique check) —
+     * that's a different convention from Staff/ClassSections, which lock a
+     * non-manager to $user->campuses()->value('id'). I matched THIS page's
+     * existing convention rather than the other feature's, since it's what
+     * the rest of this component already does. Flag it if that's wrong.
+     *
+     * @return array{0: bool, 1: int, 2: ?int} [isManager, organizationId, lockedCampusId]
+     */
+    protected function resolveScope(): array
+    {
+        $user = Auth::user();
+        $isManager = $user->hasRole('Manager');
+
+        return [
+            $isManager,
+            $user->organization_id,
+            $isManager ? null : session('current_campus_id'),
+        ];
     }
 }

@@ -16,6 +16,12 @@
                 </div>
             @endif
 
+            @if (session('error'))
+                <div class="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-md">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <div class="bg-white shadow-sm rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -51,6 +57,14 @@
                                             wire:confirm="Are you sure?" class="text-gray-500 hover:text-gray-700">
                                             {{ $campus->is_active ? 'Deactivate' : 'Reactivate' }}
                                         </button>
+                                        @can('delete', $campus)
+                                            <button wire:click="delete({{ $campus->id }})"
+                                                wire:confirm="Delete {{ $campus->name }} permanently? This will also delete ALL of its students, classes, sections, and staff records (and staff login accounts with no other campus). This cannot be undone."
+                                                wire:loading.attr="disabled" wire:target="delete({{ $campus->id }})"
+                                                class="text-red-600 hover:text-red-800 disabled:opacity-50">
+                                                Delete
+                                            </button>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty

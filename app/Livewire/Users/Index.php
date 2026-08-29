@@ -120,4 +120,20 @@ use Livewire\WithPagination;
         $this->showModal = false;
         session()->flash('status', 'User saved successfully.');
     }
+
+    public function delete(int $id): void
+    {
+        $user = User::findOrFail($id);
+        $this->authorize('delete', $user);
+
+        if ($user->id === auth()->id()) {
+            session()->flash('error', 'You cannot delete your own account.');
+            return;
+        }
+
+        $user->delete();
+
+        $this->resetPage();
+        session()->flash('status', 'User deleted successfully.');
+    }
 }

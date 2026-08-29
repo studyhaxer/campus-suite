@@ -15,6 +15,10 @@
                 <div class="mb-4 p-3 bg-green-50 text-green-700 text-sm rounded-md">{{ session('status') }}</div>
             @endif
 
+            @if (session('error'))
+                <div class="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-md">{{ session('error') }}</div>
+            @endif
+
             <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -41,11 +45,21 @@
                                         {{ $user->campuses->pluck('name')->join(', ') ?: '—' }}
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-right text-sm">
+                                <td class="px-4 py-3 text-right text-sm space-x-3 whitespace-nowrap">
                                     @can('update', $user)
                                         <button wire:click="openEdit({{ $user->id }})" class="text-indigo-600 hover:text-indigo-800 font-medium">
                                             Edit
                                         </button>
+                                    @endcan
+                                    @can('delete', $user)
+                                        @if ($user->id !== auth()->id())
+                                            <button wire:click="delete({{ $user->id }})"
+                                                wire:confirm="Are you sure you want to delete {{ $user->name }}? This cannot be undone."
+                                                wire:loading.attr="disabled" wire:target="delete({{ $user->id }})"
+                                                class="text-red-600 hover:text-red-800 font-medium disabled:opacity-50">
+                                                Delete
+                                            </button>
+                                        @endif
                                     @endcan
                                 </td>
                             </tr>

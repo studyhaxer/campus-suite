@@ -94,6 +94,13 @@
                                                 {{ $profile->employment_status === 'terminated' ? 'Reactivate' : 'Terminate' }}
                                             </button>
                                         @endcan
+                                        @can('delete', $profile)
+                                            <button wire:click="deleteStaff({{ $profile->id }})"
+                                                wire:confirm="Delete {{ $profile->user->name }}? This cannot be undone."
+                                                class="text-red-600 hover:text-red-800">
+                                                Delete
+                                            </button>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty
