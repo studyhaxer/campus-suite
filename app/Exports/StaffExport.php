@@ -2,108 +2,60 @@
 
 namespace App\Exports;
 
-use App\Models\Campus;
+use App\Models\StaffProfile;
+use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\Export;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class StaffTemplateExport implements Export, WithMultipleSheets
+class StaffExport implements Export, FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
-    use Exportable;
+    protected string $search;
 
-    protected bool $isManager;
+    protected string $statusFilter;
 
-    protected int $organizationId;
-
-    public function __construct(bool $isManager, int $organizationId)
+    public function __construct(string $search = '', string $statusFilter = '')
     {
-        $this->isManager = $isManager;
-        $this->organizationId = $organizationId;
+        $this->search = $search;
+        $this->statusFilter = $statusFilter;
     }
 
-    public function sheets(): array
+    public function collection(): Enumerable
     {
-        $sheets = [
-            'Staff Template' => new StaffTemplateDataSheet($this->isManager),
-        ];
-
-        if ($this->isManager) {
-            $sheets['Campus Codes'] = new StaffTemplateCampusSheet($this->organizationId);
-        }
-
-        return $sheets;
-    }
-}
-
-class StaffTemplateDataSheet implements FromArray, ShouldAutoSize, WithHeadings, WithStyles
-{
-    protected bool $isManager;
-
-    public function __construct(bool $isManager)
-    {
-        $this->isManager = $isManager;
+        return StaffProfile::with('user.roles')
+            ->when($this->search, fn ($q) => $q->whereHas('user', fn ($q2) => $q2
+                ->where('name', 'like', "%{$this->search}%")
+                ->orWhere('email', 'like', "%{$this->search}%")
+            ))
+            ->when($this->statusFilter, fn ($q) => $q->where('employment_status', $this->statusFilter))
+            ->orderByDesc('created_at')
+            ->get();
     }
 
     public function headings(): array
     {
-        $headings = [
+        return [
             'Name', 'Email', 'Role', 'Designation', 'Department',
             'Joining Date', 'Base Salary', 'Employment Status',
         ];
-
-        if ($this->isManager) {
-            $headings[] = 'Campus Code';
-        }
-
-        return $headings;
     }
 
-    public function array(): array
+    public function map($profile): array
     {
-        $example = [
-            'Jane Doe', 'jane.doe@example.com', 'Teacher', 'Senior Math Teacher', 'Academics',
-            now()->format('Y-m-d'), '50000', 'active',
+        return [
+            $profile->user->name,
+            $profile->user->email,
+            $profile->user->roles->first()?->name ?? '',
+            $profile->designation,
+            $profile->department ?? '',
+            $profile->joining_date?->format('Y-m-d'),
+            $profile->base_salary,
+            $profile->employment_status,
         ];
-
-        if ($this->isManager) {
-            $example[] = 'MAIN';
-        }
-
-        return [$example];
-    }
-
-    public function styles(Worksheet $sheet): ?array
-    {
-        return [1 => ['font' => ['bold' => true]]];
-    }
-}
-
-class StaffTemplateCampusSheet implements FromArray, ShouldAutoSize, WithHeadings, WithStyles
-{
-    protected int $organizationId;
-
-    public function __construct(int $organizationId)
-    {
-        $this->organizationId = $organizationId;
-    }
-
-    public function headings(): array
-    {
-        return ['Campus Code', 'Campus Name'];
-    }
-
-    public function array(): array
-    {
-        return Campus::where('organization_id', $this->organizationId)
-            ->orderBy('name')
-            ->get(['code', 'name'])
-            ->map(fn ($campus) => [$campus->code, $campus->name])
-            ->toArray();
     }
 
     public function styles(Worksheet $sheet): ?array
