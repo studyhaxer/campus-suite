@@ -2,16 +2,22 @@
 
 namespace App\Livewire\Staff;
 
+use App\Exports\StaffExport;
+use App\Exports\StaffTemplateExport;
+use App\Imports\StaffImport;
 use App\Models\StaffProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Maatwebsite\Excel\Facades\Excel;
 
 #[Layout('layouts.app')] class Index extends Component
 {
+    use WithFileUploads;
     use WithPagination;
 
     public string $search = '';
@@ -19,6 +25,11 @@ use Livewire\WithPagination;
 
     public bool $showModal = false;
     public ?int $editingProfileId = null;
+
+    public bool $showImportModal = false;
+    public $importFile = null;
+    public array $importErrors = [];
+    public ?int $importedCount = null;
 
     public string $name = '';
     public string $email = '';
@@ -176,5 +187,63 @@ use Livewire\WithPagination;
         $profile->update([
             'employment_status' => $profile->employment_status === 'terminated' ? 'active' : 'terminated',
         ]);
+    }
+
+    public function downloadTemplate()
+    {
+        $this->authorize('create', StaffProfile::class);
+
+        $user = auth()->user();
+
+        return Excel::download(
+            new StaffTemplateExport($user->hasRole('Manager'), $user->organization_id),
+            'staff_import_template.xlsx'
+        );
+    }
+
+    public function exportStaff()
+    {
+        $this->authorize('viewAny', StaffProfile::class);
+
+        return Excel::download(
+            new StaffExport($this->search, $this->statusFilter),
+            'staff_export_' . now()->format('Y_m_d_His') . '.xlsx'
+        );
+    }
+
+    public function openImport(): void
+    {
+        $this->authorize('create', StaffProfile::class);
+        $this->reset(['importFile', 'importErrors', 'importedCount']);
+        $this->showImportModal = true;
+    }
+
+    public function import(): void
+    {
+        $this->authorize('create', StaffProfile::class);
+
+        $this->validate([
+            'importFile' => 'required|file|mimes:xlsx,xls|max:5120',
+        ]);
+
+        $user = auth()->user();
+        $isManager = $user->hasRole('Manager');
+
+        $importer = new StaffImport(
+            $user->organization_id,
+            $isManager,
+            $isManager ? null : session('current_campus_id')
+        );
+
+        Excel::import($importer, $this->importFile->getRealPath());
+
+        $this->importedCount = $importer->importedCount();
+        $this->importErrors = $importer->errorMessages();
+        $this->importFile = null;
+
+        if (empty($this->importErrors)) {
+            $this->showImportModal = false;
+            session()->flash('status', "Imported {$this->importedCount} staff member(s) successfully.");
+        }
     }
 }
