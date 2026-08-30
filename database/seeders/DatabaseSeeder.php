@@ -15,22 +15,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-    $this->call(RolesAndPermissionsSeeder::class);
+        $this->call(RolesAndPermissionsSeeder::class);
 
-    $organization = \App\Models\Organization::firstOrCreate(
-        ['slug' => 'demo-org'],
-        ['name' => 'Demo Organization']
-    );
-
-    $manager = \App\Models\User::firstOrCreate(
-        ['email' => 'manager@example.com'],
-        [
-            'name' => 'Demo Manager',
-            'password' => bcrypt('password'),
-            'organization_id' => $organization->id,
-        ]
-    );
-
-    $manager->assignRole('Manager');
+        // No demo organization or user is seeded here on purpose — this app
+        // is invite-only by design. Create the first organization + Manager
+        // account with:
+        //
+        //   php artisan app:create-manager
+        //
+        // which prompts for the details interactively so no credentials
+        // ever live in source control.
     }
 }

@@ -15,16 +15,15 @@ Campus Suite is built for school organizations that operate several physical cam
 ## ✨ Key Features
 
 - **Multi-Campus Management** — create, configure, and manage unlimited campuses under one organization account
-- **User & Role Management** — Manager, Campus Admin, Accountant, and Teacher roles, each scoped to their authorized campus(es)
-- **Student Management** — admissions, enrollment, transfers between campuses, bulk CSV import
-- **Staff / HR Management** — employee records, pay grades, inter-campus transfers with full history
-- **Attendance** — daily student & staff attendance, bulk marking, audit-logged corrections, attendance-based payroll deductions
-- **Fee Management** — fee structures, auto-generated invoices, payments, receipts, concessions/scholarships, overdue tracking
-- **Payroll** — salary structures, monthly payroll runs with attendance-based adjustments, payslip generation (PDF)
-- **Cross-Campus Reporting** — consolidated Manager dashboard, campus comparison charts, drill-down, PDF/Excel export
-- **Notifications** — in-app and email alerts for due fees, low attendance, and payroll events
+- **User & Role Management** — Manager, Campus Admin, Accountant, and Teacher roles, each scoped to their authorized campus(es); accounts are admin-provisioned, no public self-registration
+- **Student Management** — admissions and enrollment, class/section assignment, Excel import/export with a downloadable template
+- **Staff / HR Management** — employee records with login accounts, designation/department/salary, Excel import/export with a downloadable template
+- **Attendance** — daily student & staff attendance, roster-style bulk marking (Present/Absent)
+- **Fee Management** — fixed monthly fee per class, auto-generated monthly invoices, payment collection (supports partial payments), overdue tracking
+- **Payroll** — flat base salary per month, manual bonus/deduction adjustments before finalizing, PDF payslip download
+- **Cross-Campus Reporting** — consolidated Manager dashboard (org-wide KPIs + per-campus registry table), role-scoped single-campus dashboard for Campus Admin/Accountant/Teacher
 
-> Out of scope for v1.0: parent/student self-service portal, SMS/WhatsApp notifications, biometric attendance devices, transport/hostel modules, native mobile apps. (Planned for a later phase.)
+> Out of scope for v1.0: parent/student self-service portal, email/in-app notifications, attendance-based payroll deductions, fee concessions/scholarships, activity/audit logging, campus comparison charts, SMS/WhatsApp notifications, biometric attendance devices, transport/hostel modules, native mobile apps, email verification (accounts are pre-verified on creation). Planned for a later phase where noted.
 
 ---
 
@@ -38,11 +37,8 @@ Campus Suite is built for school organizations that operate several physical cam
 | Database | PostgreSQL |
 | Auth | Laravel Breeze (Livewire stack) |
 | Roles & Permissions | spatie/laravel-permission |
-| Audit Logging | spatie/laravel-activitylog |
-| PDF Generation | barryvdh/laravel-dompdf |
-| Excel Export | maatwebsite/excel |
-| Charts | Chart.js |
-| Background Jobs | Laravel Queues + Task Scheduler |
+| PDF Generation | barryvdh/laravel-dompdf (payslips) |
+| Excel Import/Export | maatwebsite/excel (Students, Staff, Classes) |
 
 ---
 
@@ -87,8 +83,18 @@ DB_PASSWORD=your_postgres_password
 Create the database in pgAdmin (or via `createdb campus_suite`), then run:
 
 ```bash
-php artisan migrate
+php artisan migrate --seed
 ```
+
+### Create the first account
+
+There's no public sign-up — the first Manager account (and its organization) is created via an interactive command:
+
+```bash
+php artisan app:create-manager
+```
+
+It prompts for an organization name, your name, email, and password, and creates the first Manager login. From there, log in and create your first campus from the Campuses page — everything else (Students, Staff, Fees, Payroll) is created from within the app by the Manager or Campus Admin.
 
 ### Run the app
 
@@ -102,8 +108,8 @@ php artisan serve  # starts the app at http://127.0.0.1:8000, run in another
 ## 📁 Project Structure Notes
 
 - All campus-scoped Eloquent models use a shared `BelongsToCampus` trait + global scope, enforced at the query layer — not just the UI — so a Campus Admin or Accountant can never see another campus's data.
-- Role-based access control is enforced via `spatie/laravel-permission` on every route/controller action, not just hidden in the UI.
-- All financial actions (fee payments, payroll approvals) are recorded via `spatie/laravel-activitylog` with user, timestamp, and before/after values.
+- Role-based access control is enforced via Laravel Policies (backed by `spatie/laravel-permission` roles) on every Livewire component action, not just hidden in the UI.
+- Campus Admins are explicitly prevented from creating or editing another Campus Admin or Manager account — enforced in the policy layer, not just the form.
 
 ---
 
@@ -111,15 +117,14 @@ php artisan serve  # starts the app at http://127.0.0.1:8000, run in another
 
 - [x] Phase 1 — Foundation (auth, roles, campus scoping, base layout)
 - [x] Phase 2 — Campus Management
-- [x] Phase 3 — User & Role Management
-- [x] Phase 4 — Student Management
-- [x] Phase 5 — Staff / HR Management
-- [x] Phase 6 — Attendance
-- [x] Phase 7 — Fee Management
-- [x] Phase 8 — Payroll
-- [ ] Phase 9 — Reporting & Cross-Campus Dashboard
-- [ ] Phase 10 — Notifications
-- [ ] Phase 11 — Polish & Non-Functional Requirements (responsiveness, accessibility, performance)
+- [x] Phase 3 — Student Management (+ Classes & Sections, Excel import/export)
+- [x] Phase 4 — Staff Management (+ Excel import/export)
+- [x] Phase 5 — Attendance (student & staff)
+- [x] Phase 6 — Fee Management
+- [x] Phase 7 — Payroll (+ PDF payslips)
+- [x] Phase 8 — Reporting & Cross-Campus Dashboard, sidebar navigation
+- [ ] Automated test coverage (currently only default Breeze auth tests)
+- [ ] v2 candidates: email verification/notifications, activity/audit logging, fee concessions, campus comparison charts, PDF fee receipts
 
 ---
 
@@ -127,8 +132,9 @@ php artisan serve  # starts the app at http://127.0.0.1:8000, run in another
 
 - All campus data isolation is enforced server-side via `campus_id` scoping — never relies on UI-level filtering alone.
 - Passwords are hashed using bcrypt (Laravel default).
-- All financial and payroll actions are audit-logged.
-- Role-based access control is enforced on every API/controller endpoint.
+- Role-based access control is enforced in the policy layer on every Livewire component action.
+- Public self-registration is disabled — all accounts are created by a Manager or Campus Admin from within the app, or via `php artisan app:create-manager` for the first account. See "Getting Started" below.
+- Email verification is not enforced in v1 (no mail transport configured yet); accounts are marked verified at creation time.
 
 ---
 

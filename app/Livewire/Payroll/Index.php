@@ -4,6 +4,7 @@ namespace App\Livewire\Payroll;
 
 use App\Models\Payslip;
 use App\Models\StaffProfile;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -21,9 +22,18 @@ use Livewire\WithPagination;
     public string $adjustAmount = '0';
     public string $adjustNotes = '';
 
-    public function updatingSearch(): void { $this->resetPage(); }
-    public function updatingStatusFilter(): void { $this->resetPage(); }
-    public function updatingMonth(): void { $this->resetPage(); }
+    public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+    public function updatingStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+    public function updatingMonth(): void
+    {
+        $this->resetPage();
+    }
 
     public function mount(): void
     {
@@ -37,10 +47,12 @@ use Livewire\WithPagination;
 
         $payslips = Payslip::with('staff.staffProfile')
             ->whereDate('month', $monthDate)
-            ->when($this->search, fn ($q) => $q->whereHas('staff', fn ($q2) => $q2
-                ->where('name', 'like', "%{$this->search}%")
+            ->when($this->search, fn($q) => $q->whereHas(
+                'staff',
+                fn($q2) => $q2
+                    ->where('name', 'like', "%{$this->search}%")
             ))
-            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->statusFilter, fn($q) => $q->where('status', $this->statusFilter))
             ->orderByDesc('created_at')
             ->paginate(15);
 
@@ -57,8 +69,8 @@ use Livewire\WithPagination;
         $profiles = StaffProfile::with('user.roles')
             ->where('employment_status', '!=', 'terminated')
             ->get()
-            ->when(! $isManager, fn ($collection) => $collection->reject(
-                fn ($profile) => $profile->user->hasAnyRole(['Manager', 'Campus Admin'])
+            ->when(! $isManager, fn($collection) => $collection->reject(
+                fn($profile) => $profile->user->hasAnyRole(['Manager', 'Campus Admin'])
             ));
 
         $created = 0;
@@ -136,5 +148,15 @@ use Livewire\WithPagination;
         ]);
 
         session()->flash('status', 'Payslip marked as paid.');
+    }
+
+    public function downloadPdf(int $payslipId)
+    {
+        $payslip = Payslip::with('staff.staffProfile', 'campus')->findOrFail($payslipId);
+        $this->authorize('view', $payslip);
+
+        $filename = 'payslip-' . str($payslip->staff->name)->slug() . '-' . $payslip->month->format('Y-m') . '.pdf';
+
+        return Pdf::loadView('pdf.payslip', ['payslip' => $payslip])->download($filename);
     }
 }
